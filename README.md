@@ -115,21 +115,10 @@ This will:
 - Generate embeddings
 - Store in Weaviate
 
-### 5. Query the PDFs
-
-Run the UI (Streamlit example):
-
-```sh
-streamlit run ui/streamlit_app.py
-```
-
-Now you can upload/query PDFs interactively 🎉
-
----
 
 ## 🛠 Tech Stack
 
-- **LLM:** OpenAI GPT / Local LLaMA
-- **Vector DB:** Weaviate (local Docker or cloud)
-- **Frontend:** Streamlit / Gradio
-- **Embeddings:** OpenAI or SentenceTransformers
+- **LLM:** Local LLaMA
+- **Vector DB:** Weaviate 
+- **Frontend:** Gradio
+- **Embeddings:** SentenceTransformers
