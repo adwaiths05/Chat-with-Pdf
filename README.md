@@ -1,13 +1,8 @@
 # 📘 Chat with PDFs
 
-Chat with multiple PDF documents using LLMs + Weaviate (vector DB).  
-This project lets you upload PDFs, process them into embeddings, and then ask natural language questions — with citations and cross-document reasoning.
-
 ---
 
 ## 🚀 Features
-
-<h1>📘 Chat with PDFs</h1>
 
 Interact with multiple PDF documents using LLMs and Qdrant (vector database). Upload PDFs, process them into embeddings, and ask natural language questions — with citations and cross-document reasoning.
 
