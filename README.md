@@ -7,11 +7,19 @@ This project lets you upload PDFs, process them into embeddings, and then ask na
 
 ## 🚀 Features
 
-- Upload multiple PDFs and query them in natural language
-- Store embeddings in Weaviate (local or cloud)
+<h1>📘 Chat with PDFs</h1>
+
+Interact with multiple PDF documents using LLMs and Qdrant (vector database). Upload PDFs, process them into embeddings, and ask natural language questions — with citations and cross-document reasoning.
+
+---
+
+## 🚀 Features
+
+- Upload and query multiple PDFs in natural language
+- Store embeddings in Qdrant (local, via Docker)
 - Hybrid search (semantic + keyword)
-- Citations with page numbers + sections
-- Modular design → easy to extend with agents, summarizers, or different vector DBs
+- Citations with page numbers and sections
+- Modular design: easily extend with agents, summarizers, or different vector DBs
 
 ---
 
@@ -19,106 +27,132 @@ This project lets you upload PDFs, process them into embeddings, and then ask na
 
 ```
 chat-with-pdfs/
-│── app.py                  # Main entry point (UI or API)
-│── config.py               # Config (DB settings, API keys)
-│── requirements.txt        # Dependencies
-│── README.md               # Documentation
+│── .env                        # Environment variables
+│── requirements.txt            # Base dependencies for backend
+│── docker-compose.yml          # Orchestrates backend, UI, DB
+│── README.md
 │
-├── data/                   # Raw and processed files
-│   ├── uploads/            # User-uploaded PDFs
-│   ├── processed/          # Extracted text/chunks
+├── data/
+│   ├── uploads/                # User-uploaded PDFs
+│   └── processed/              # Extracted & chunked text
 │
-├── database/               # Vector DB logic
-│   ├── db_manager.py
-│   ├── schema.py
+├── database/
+│   ├── __init__.py
+│   ├── db_manager.py           # Connects to Qdrant
+│   └── schema.py               # Metadata schema (page, section, etc.)
 │
-├── ingestion/              # PDF → text → chunks → embeddings
-│   ├── pdf_loader.py
-│   ├── text_splitter.py
-│   ├── embeddings.py
-│   ├── pipeline.py
+├── ingestion/
+│   ├── __init__.py
+│   ├── pdf_loader.py           # Extracts text from PDFs
+│   ├── text_splitter.py        # Splits into chunks
+│   ├── embeddings.py           # Generates embeddings (HuggingFace/OpenAI)
+│   └── pipeline.py             # Orchestration: load → split → embed → store
 │
-├── retrieval/              # Query pipeline
-│   ├── retriever.py
-│   ├── hybrid_search.py
+├── retrieval/
+│   ├── __init__.py
+│   ├── retriever.py            # Retrieves relevant chunks
+│   ├── reranker.py             # (Optional) re-rank results
+│   └── hybrid_search.py        # If using keyword+vector
 │
-├── llm/                    # LLM logic
-│   ├── chat_model.py
-│   ├── prompts.py
+├── llm/
+│   ├── __init__.py
+│   ├── chat_model.py           # Wrapper for GPT/LLaMA etc.
+│   ├── prompts.py              # Custom prompts (summaries, compare, explain)
+│   └── agents.py               # Specialized agents (summarizer, comparer, reasoner)
 │
-├── ui/                     # Frontend
+├── utils/
+│   ├── __init__.py
+│   ├── logging.py
+│   ├── pdf_utils.py
+│   └── text_cleaning.py
+│
+├── ui/
 │   ├── streamlit_app.py
 │   ├── gradio_app.py
+│   └── react_frontend/         # Optional full React UI
 │
-└── tests/                  # Unit tests
+├── backend/
+│   ├── Dockerfile              # Docker container for backend
+│   └── entrypoint.py           # Starts app or orchestrates services
+│
+└── qdrant/
+    └── storage/                # Persistent DB storage for Qdrant
 ```
 
 ---
 
 ## ⚙️ Setup Instructions
 
-### 1. Clone Repo & Install Requirements
+### 1. Clone the Repository & Install Requirements
 
-```sh
+```bash
 git clone https://github.com/yourusername/chat-with-pdfs.git
 cd chat-with-pdfs
 pip install -r requirements.txt
 ```
 
-### 2. Install & Run Weaviate with Docker
+### 2. Install & Run Qdrant with Docker
 
-**Install Docker**
+- **Install Docker**
+  - Windows/Mac: Download Docker Desktop
+  - Linux:
+    ```bash
+    sudo apt update && sudo apt install docker.io -y
+    ```
 
-- Download Docker Desktop (Windows/Mac)
-- Linux:
-  ```sh
-  sudo apt update && sudo apt install docker.io -y
+- **Run Qdrant Container**
+  ```bash
+  docker run -d -p 6333:6333 \
+    -v $(pwd)/qdrant/storage:/qdrant/storage \
+    qdrant/qdrant
   ```
+  - Access Qdrant at: http://localhost:6333
+  - Data persists in `qdrant/storage/` volume
 
-**Run Weaviate Container**
+### 3. Configure the Project
 
-```sh
-docker run -d -p 8080:8080 \
-    -v weaviate_data:/var/lib/weaviate \
-    semitechnologies/weaviate \
-    --host 0.0.0.0 \
-    --port 8080 \
-    --modules-text2vec-openai
-```
-
-Access: [http://localhost:8080/v1/graphql](http://localhost:8080/v1/graphql)  
-This persists data in a Docker volume `weaviate_data`.
-
-### 3. Configure Project
-
-Edit `config.py`:
+Edit `.env` or `config.py` as needed:
 
 ```python
-DB_TYPE = "weaviate"
-WEAVIATE_URL = "http://localhost:8080"
-WEAVIATE_API_KEY = None  # Not needed for local
-EMBEDDING_DIM = 1536     # Match your embedding model
+DB_TYPE = "qdrant"
+QDRANT_URL = "http://localhost:6333"
+EMBEDDING_DIM = 1536  # Match your embedding model
 ```
 
 ### 4. Process PDFs
 
-Put your PDFs into `data/uploads/` and run:
+Place your PDFs in `data/uploads/` and run:
 
-```sh
+```bash
 python ingestion/pipeline.py
 ```
 
 This will:
-
 - Extract text
 - Split into chunks
 - Generate embeddings
-- Store in Weaviate
+- Store in Qdrant
 
+### 5. Run the UI
+
+- **Gradio:**
+  ```bash
+  python ui/gradio_app.py
+  ```
+- **Streamlit (optional):**
+  ```bash
+  streamlit run ui/streamlit_app.py
+  ```
+
+Access the interface at:
+- Gradio: http://localhost:7860
+- Streamlit: http://localhost:8501
+
+---
 
 ## 🛠 Tech Stack
 
-- **LLM:** Local LLaMA
-- **Vector DB:** Weaviate 
-- **Frontend:** Gradio
-- **Embeddings:** SentenceTransformers
+- **LLM:** Local LLaMA / Hugging Face models
+- **Vector DB:** Qdrant (via Docker)
+- **Frontend:** Gradio / Streamlit / Optional React
+- **Embeddings:** SentenceTransformers or OpenAI
