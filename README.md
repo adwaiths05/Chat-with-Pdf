@@ -11,9 +11,6 @@ This project lets you upload PDFs, process them into embeddings, and then ask na
 
 Interact with multiple PDF documents using LLMs and Qdrant (vector database). Upload PDFs, process them into embeddings, and ask natural language questions — with citations and cross-document reasoning.
 
----
-
-## 🚀 Features
 
 - Upload and query multiple PDFs in natural language
 - Store embeddings in Qdrant (local, via Docker)
