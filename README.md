@@ -139,10 +139,6 @@ This will:
   ```bash
   python ui/gradio_app.py
   ```
-- **Streamlit (optional):**
-  ```bash
-  streamlit run ui/streamlit_app.py
-  ```
 
 Access the interface at:
 - Gradio: http://localhost:7860
@@ -154,5 +150,5 @@ Access the interface at:
 
 - **LLM:** Local LLaMA / Hugging Face models
 - **Vector DB:** Qdrant (via Docker)
-- **Frontend:** Gradio / Streamlit / Optional React
-- **Embeddings:** SentenceTransformers or OpenAI
+- **Frontend:** Gradio 
+- **Embeddings:** SentenceTransformers 
