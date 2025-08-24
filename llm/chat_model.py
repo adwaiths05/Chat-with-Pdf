@@ -1,16 +1,28 @@
 from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+import torch
+
 
 class HuggingFaceModel:
-    def __init__(self, model_name: str, device: str = "cuda"):
+    def __init__(self, model_name: str, device: str = "cuda", quantize: bool = False):
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-        # load model with auto device placement
-        self.model = AutoModelForCausalLM.from_pretrained(
-            model_name,
-            device_map="auto",
-            torch_dtype="auto"
-        )
+        # Decide quantization
+        if quantize:
+            print(f"🔹 Loading {model_name} in 4-bit quantized mode")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                device_map="auto",
+                load_in_4bit=True,
+                torch_dtype=torch.float16
+            )
+        else:
+            print(f"🔹 Loading {model_name} normally")
+            self.model = AutoModelForCausalLM.from_pretrained(
+                model_name,
+                device_map="auto",
+                torch_dtype="auto"
+            )
 
         # text generation pipeline
         self.pipe = pipeline(

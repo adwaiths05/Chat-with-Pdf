@@ -1,13 +1,17 @@
 import gradio as gr
 from llms.agents import QAAgent, SummarizationAgent, ReasoningAgent
+from ingestion.retriever import Retriever
 
 # Initialize agents
 qa_agent = QAAgent()
 summ_agent = SummarizationAgent()
 reason_agent = ReasoningAgent()
+retriever = Retriever()  # For fetching context from Qdrant
 
 
-def handle_qa(context, question):
+# Handlers
+def handle_qa(question):
+    context, results = retriever.retrieve(question, top_k=5)
     return qa_agent.answer(context=context, question=question)
 
 
@@ -19,24 +23,33 @@ def handle_reasoning(question):
     return reason_agent.reason(question=question)
 
 
+# Gradio UI
 with gr.Blocks() as demo:
-    gr.Markdown("#  Multi-Agent PDF Assistant")
+    gr.Markdown("# 📚 Multi-Agent PDF Assistant")
 
     with gr.Tabs():
         # Q&A tab
         with gr.TabItem("Q&A"):
-            context_input = gr.Textbox(label="Context / PDF Chunks", lines=10, placeholder="Paste extracted text here...")
-            question_input = gr.Textbox(label="Question", placeholder="Ask something based on the context")
-            qa_output = gr.Textbox(label="Answer", lines=5)
+            gr.Markdown("Ask a question based on ingested PDFs.")
+            question_input = gr.Textbox(
+                label="Question", 
+                placeholder="Ask something from your PDFs"
+            )
+            qa_output = gr.Textbox(label="Answer", lines=8)
             gr.Button("Get Answer").click(
                 fn=handle_qa,
-                inputs=[context_input, question_input],
+                inputs=[question_input],
                 outputs=[qa_output]
             )
 
         # Summarization tab
         with gr.TabItem("Summarization"):
-            text_input = gr.Textbox(label="Text / PDF Content", lines=15, placeholder="Paste the text to summarize")
+            gr.Markdown("Paste any text to get a clear summary.")
+            text_input = gr.Textbox(
+                label="Text / PDF Content", 
+                lines=15, 
+                placeholder="Paste the text to summarize"
+            )
             summary_output = gr.Textbox(label="Summary", lines=10)
             gr.Button("Summarize").click(
                 fn=handle_summarization,
@@ -46,8 +59,12 @@ with gr.Blocks() as demo:
 
         # Reasoning tab
         with gr.TabItem("Reasoning"):
-            reasoning_input = gr.Textbox(label="Question", placeholder="Enter complex question")
-            reasoning_output = gr.Textbox(label="Stepwise Answer", lines=10)
+            gr.Markdown("Ask a complex question requiring reasoning.")
+            reasoning_input = gr.Textbox(
+                label="Question", 
+                placeholder="Enter a complex question"
+            )
+            reasoning_output = gr.Textbox(label="Stepwise Answer", lines=12)
             gr.Button("Reason").click(
                 fn=handle_reasoning,
                 inputs=[reasoning_input],

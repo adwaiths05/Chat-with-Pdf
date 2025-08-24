@@ -1,10 +1,14 @@
 from .chat_model import HuggingFaceModel
 from .prompts import QA_PROMPT, SUMMARY_PROMPT, REASONING_PROMPT
 
+
 class QAAgent:
     def __init__(self):
-        # Q&A Agent -> LLaMA-3 8B Instruct
-        self.model = HuggingFaceModel("meta-llama/Meta-Llama-3-8B-Instruct")
+        # Using LLaMA-3-8B with 4-bit quantization (fits in 4060 VRAM)
+        self.model = HuggingFaceModel(
+            "meta-llama/Meta-Llama-3-8B-Instruct",
+            quantize=True  # new param we’ll handle in HuggingFaceModel
+        )
 
     def answer(self, context: str, question: str) -> str:
         prompt = QA_PROMPT.format(context=context, question=question)
@@ -13,8 +17,8 @@ class QAAgent:
 
 class SummarizationAgent:
     def __init__(self):
-        # Summarization Agent -> LLaMA-3 70B Instruct
-        self.model = HuggingFaceModel("meta-llama/Meta-Llama-3-70B-Instruct")
+        # Flan-T5 is much lighter and efficient
+        self.model = HuggingFaceModel("google/flan-t5-large")
 
     def summarize(self, text: str) -> str:
         prompt = SUMMARY_PROMPT.format(text=text)
@@ -23,8 +27,12 @@ class SummarizationAgent:
 
 class ReasoningAgent:
     def __init__(self):
-        # Reasoning Agent -> GPT-4o Mini OSS
-        self.model = HuggingFaceModel("openai-community/gpt-4o-mini-oss")
+        # You can either reuse LLaMA-3-8B or Falcon-7B
+        # Let's pick Falcon-7B (lighter than 70B, but still strong)
+        self.model = HuggingFaceModel(
+            "tiiuae/falcon-7b-instruct",
+            quantize=True
+        )
 
     def reason(self, question: str) -> str:
         prompt = REASONING_PROMPT.format(question=question)

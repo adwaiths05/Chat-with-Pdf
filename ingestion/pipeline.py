@@ -19,6 +19,8 @@ def process_pdf(file_path, pdf_name=None):
 
     print(f" Stored {len(chunks)} chunks from {file_path} into DB")
 
+def ingest_pdf(file_path, pdf_name=None):
+    process_pdf(file_path, pdf_name)
 
 if __name__ == "__main__":
     process_pdf("sample.pdf", pdf_name="sample.pdf")

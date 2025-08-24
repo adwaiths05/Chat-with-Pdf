@@ -11,24 +11,21 @@ pdfplumber==0.9.0
 python-docx==0.8.12
 
 # Text processing
-nltk==3.9.1
 regex==2023.10.3
 tqdm==4.66.1
 
 # Embeddings / LLMs
 torch==2.3.1
-transformers==4.35.0
-sentence-transformers==2.2.2
+transformers==4.44.2
+sentence-transformers==2.7.0
 accelerate==0.23.0
-
-# Optional for GPU
-bitsandbytes==0.41.1
+bitsandbytes==0.41.1   # for quantization support
 
 # Vector DB
 qdrant-client==1.13.0
 
 # UI
-gradio==3.41.0
+gradio==4.0.2
 streamlit==1.26.0
 
 # Utilities
