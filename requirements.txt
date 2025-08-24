@@ -6,33 +6,33 @@ python-dotenv==1.0.1
 typing-extensions==4.9.0
 
 # PDF processing
-PyMuPDF==1.26.2
+PyMuPDF>=1.26.3,<1.27
 pdfplumber==0.9.0
-python-docx==0.8.12
+python-docx>=1.0.0,<1.3
 
 # Text processing
 regex==2023.10.3
 tqdm==4.66.1
 
 # Embeddings / LLMs
-torch==2.3.1
-transformers==4.44.2
-sentence-transformers==2.7.0
-accelerate==0.23.0
-bitsandbytes==0.41.1   # for quantization support
+torch>=2.3.1,<2.4.0                 # Compatible with RTX 4060
+transformers>=4.35.0,<4.45.0       # Modern Hugging Face models
+sentence-transformers>=2.2.2,<2.8.0
+accelerate>=0.23.0,<0.24.0
+bitsandbytes>=0.41.1,<0.42.0      # For quantization support
 
 # Vector DB
-qdrant-client==1.13.0
+qdrant-client>=1.13.0,<1.14.0
 
 # UI
-gradio==4.0.2
-streamlit==1.26.0
+gradio>=4.0.0,<4.5.0
+streamlit>=1.26.0,<1.27.0
 
 # Utilities
-loguru==0.7.0
-requests==2.32.0
-numpy==1.26.0
-pandas==2.2.0
+loguru>=0.7.0,<0.8.0
+requests>=2.32.0,<2.33.0
+numpy>=1.26.0,<1.27.0
+pandas>=2.2.0,<2.3.0
 
 # Optional for hybrid search
-scikit-learn==1.3.3
+scikit-learn>=1.3.3
