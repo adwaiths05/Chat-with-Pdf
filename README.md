@@ -18,7 +18,7 @@ Interact with multiple PDF documents using LLMs and Qdrant (vector database). Up
 chat-with-pdfs/
 │── .env                        # Environment variables
 │── requirements.txt            # Base dependencies
-│── docker-compose.yml          # (optional) orchestrates backend + Qdrant
+│── docker-compose.yml          # Orchestrates backend + Qdrant
 │── README.md
 │
 ├── backend/
