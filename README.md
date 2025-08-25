@@ -1,149 +1,155 @@
 # 📘 Chat with PDFs
 
----
-
-## 🚀 Features
+🚀 Features
 
 Interact with multiple PDF documents using LLMs and Qdrant (vector database). Upload PDFs, process them into embeddings, and ask natural language questions — with citations and cross-document reasoning.
-
 
 - Upload and query multiple PDFs in natural language
 - Store embeddings in Qdrant (local, via Docker)
 - Hybrid search (semantic + keyword)
 - Citations with page numbers and sections
-- Modular design: easily extend with agents, summarizers, or different vector DBs
+- Modular design: extend with summarizers, agents, or a different vector DB
 
 ---
 
-## 📂 Project Structure
+📂 Project Structure
 
 ```
 chat-with-pdfs/
 │── .env                        # Environment variables
-│── .gitignore
-│── config.py
-│── LICENSE
-│── requirements.txt            # Base dependencies for backend
-│── docker-compose.yml          # Orchestrates backend, UI, DB
+│── requirements.txt            # Base dependencies
+│── docker-compose.yml          # (optional) orchestrates backend + Qdrant
 │── README.md
+│
+├── backend/
+│   ├── Dockerfile              # Backend container
+│   └── entrypoint.py           # Starts FastAPI + Gradio app
 │
 ├── data/
 │   ├── uploads/                # User-uploaded PDFs
 │   └── processed/              # Extracted & chunked text
 │
-├── database/
-│   ├── __init__.py
-│   ├── db_manager.py           # Connects to Qdrant
-│   └── schema.py               # Metadata schema (page, section, etc.)
+├── ingestion/                  # PDF → text → embeddings pipeline
+│   ├── pdf_loader.py
+│   ├── text_splitter.py
+│   ├── embeddings.py
+│   └── pipeline.py
 │
-├── ingestion/
-│   ├── __init__.py
-│   ├── pdf_loader.py           # Extracts text from PDFs
-│   ├── text_splitter.py        # Splits into chunks
-│   ├── embeddings.py           # Generates embeddings (HuggingFace/OpenAI)
-│   └── pipeline.py             # Orchestration: load → split → embed → store
+├── retrieval/                  # Search & retrieval
+│   ├── retriever.py
+│   └── hybrid_search.py
 │
-├── retrieval/
-│   ├── __init__.py
-│   ├── retriever.py            # Retrieves relevant chunks
-│   ├── reranker.py             # (Optional) re-rank results
-│   └── hybrid_search.py        # If using keyword+vector
-│
-├── llm/
-│   ├── __init__.py
-│   ├── chat_model.py           # Wrapper for GPT/LLaMA etc.
-│   ├── prompts.py              # Custom prompts (summaries, compare, explain)
-│   └── agents.py               # Specialized agents (summarizer, comparer, reasoner)
-│
-├── utils/
-│   ├── __init__.py
-│   ├── logging.py
-│   ├── pdf_utils.py
-│   └── text_cleaning.py
+├── llm/                        # LLM integration
+│   ├── chat_model.py
+│   └── prompts.py
 │
 ├── ui/
-│   ├── streamlit_app.py
 │   ├── gradio_app.py
-│   └── react_frontend/         # Optional full React UI
-│
-├── backend/
-│   ├── Dockerfile              # Docker container for backend
-│   └── entrypoint.py           # Starts app or orchestrates services
+│   └── streamlit_app.py
 │
 └── qdrant/
-    └── storage/                # Persistent DB storage for Qdrant
+    └── storage/                # Persistent DB storage
 ```
 
 ---
 
-## ⚙️ Setup Instructions
+⚙️ Setup Instructions
 
-### 1. Clone the Repository & Install Requirements
+1. Clone the repository
 
 ```bash
 git clone https://github.com/yourusername/chat-with-pdfs.git
 cd chat-with-pdfs
-pip install -r requirements.txt
 ```
 
-### 2. Install & Run Qdrant with Docker
+2. Start Qdrant (Vector DB)
 
-- **Install Docker**
-  - Windows/Mac: Download Docker Desktop
-  - Linux:
-    ```bash
-    sudo apt update && sudo apt install docker.io -y
-    ```
+Run Qdrant container:
 
-- **Run Qdrant Container**
-  ```bash
-  docker run -d -p 6333:6333 \
-    -v $(pwd)/qdrant/storage:/qdrant/storage \
-    qdrant/qdrant
-  ```
-  - Access Qdrant at: http://localhost:6333
-  - Data persists in `qdrant/storage/` volume
-
-### 3. Configure the Project
-
-Edit `.env` or `config.py` as needed:
-
-```python
-DB_TYPE = "qdrant"
-QDRANT_URL = "http://localhost:6333"
-EMBEDDING_DIM = 1536  # Match your embedding model
+```bash
+docker run -d -p 6333:6333 \
+  -v $(pwd)/qdrant/storage:/qdrant/storage \
+  qdrant/qdrant
 ```
 
-### 4. Process PDFs
+Qdrant Dashboard → http://localhost:6333
 
-Place your PDFs in `data/uploads/` and run:
+Data persists in qdrant/storage/
+
+3. Build the backend image
+
+```bash
+docker build -t chat-pdfs-backend -f backend/Dockerfile .
+```
+
+This will:
+
+- Install dependencies from requirements.txt
+- Copy project code into /app inside the container
+- Set up Gradio server at port 7860
+
+4. Run the backend
+
+```bash
+docker run -p 7860:7860 chat-pdfs-backend
+```
+
+Now access the app at:
+👉 http://localhost:7860
+
+---
+
+📚 Usage
+
+**Process PDFs**
+
+Place PDFs in `data/uploads/` then run:
 
 ```bash
 python ingestion/pipeline.py
 ```
 
 This will:
+
 - Extract text
 - Split into chunks
 - Generate embeddings
-- Store in Qdrant
+- Store them in Qdrant
 
-### 5. Run the UI
+**Query PDFs**
 
-- **Gradio:**
-  ```bash
-  python ui/gradio_app.py
-  ```
+- Via Gradio UI → http://localhost:7860
+- Or via Streamlit (optional):
 
-Access the interface at:
-- Gradio: http://localhost:7860
-- Streamlit: http://localhost:8501
+```bash
+python ui/streamlit_app.py
+```
 
 ---
 
-## 🛠 Tech Stack
+🛑 Stopping
 
-- **LLM:** Local LLaMA / Hugging Face models
-- **Vector DB:** Qdrant (via Docker)
-- **Frontend:** Gradio 
-- **Embeddings:** SentenceTransformers 
+**Stop backend:**
+
+```bash
+docker ps   # find container id
+docker stop <container_id>
+```
+
+**Stop Qdrant:**
+
+```bash
+docker stop $(docker ps -q --filter ancestor=qdrant/qdrant)
+```
+
+Closing Docker Desktop also stops all containers.
+
+---
+
+🛠 Tech Stack
+
+- LLM: HuggingFace / local models
+- Vector DB: Qdrant (Dockerized)
+- Backend: FastAPI + Gradio
+- Embeddings: SentenceTransformers
+- UI: Gradio + Streamlit
