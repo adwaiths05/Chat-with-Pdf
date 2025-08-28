@@ -3,7 +3,7 @@ from qdrant_client.models import Distance, VectorParams
 
 class DBSchema:
     COLLECTION_NAME = "pdf_chunks"
-    VECTOR_SIZE = 768  # depends on embedding model
+    VECTOR_SIZE = 768  
     DISTANCE = Distance.COSINE
 
     @staticmethod
