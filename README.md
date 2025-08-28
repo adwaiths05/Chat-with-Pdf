@@ -1,155 +1,172 @@
-# 📘 Chat with PDFs
+# 📘 Chat with PDFs 
+---
 
-🚀 Features
+## 🚀 Features
 
-Interact with multiple PDF documents using LLMs and Qdrant (vector database). Upload PDFs, process them into embeddings, and ask natural language questions — with citations and cross-document reasoning.
+Interact with multiple PDF documents and directly fetch papers from sources like ArXiv using LLMs and Qdrant (vector database).
 
-- Upload and query multiple PDFs in natural language
-- Store embeddings in Qdrant (local, via Docker)
+- Upload PDFs or fetch LaTeX content from ArXiv
+- Parse LaTeX to text, ignoring equations and section headers
+- Store embeddings in Qdrant for semantic search
+- Ask natural language questions with context-aware reasoning
+- Modular agents: Q&A, Summarization, Reasoning
 - Hybrid search (semantic + keyword)
-- Citations with page numbers and sections
-- Modular design: extend with summarizers, agents, or a different vector DB
+- Citations with page numbers and sections for PDFs
 
 ---
 
-📂 Project Structure
+## 📂 Project Structure
 
 ```
 chat-with-pdfs/
 │── .env                        # Environment variables
-│── requirements.txt            # Base dependencies
-│── docker-compose.yml          # Orchestrates backend + Qdrant
+│── .gitignore
+│── config.py
+│── LICENSE
+│── requirements.txt
+│── docker-compose.yml          # Orchestrates backend, UI, DB
 │── README.md
-│
-├── backend/
-│   ├── Dockerfile              # Backend container
-│   └── entrypoint.py           # Starts FastAPI + Gradio app
 │
 ├── data/
 │   ├── uploads/                # User-uploaded PDFs
 │   └── processed/              # Extracted & chunked text
 │
-├── ingestion/                  # PDF → text → embeddings pipeline
-│   ├── pdf_loader.py
-│   ├── text_splitter.py
-│   ├── embeddings.py
-│   └── pipeline.py
+├── database/
+│   ├── __init__.py
+│   ├── db_manager.py           # Connects to Qdrant
+│   └── schema.py               # Metadata schema
 │
-├── retrieval/                  # Search & retrieval
+├── ingestion/
+│   ├── __init__.py
+│   ├── pdf_loader.py           # Extracts text from PDFs
+│   ├── latex_parser.py         # Parses LaTeX to plain text
+│   ├── text_splitter.py        # Splits text into chunks
+│   ├── embeddings.py           # Generates embeddings
+│   ├── arxiv_client.py         # Fetches LaTeX source from ArXiv
+│   └── pipeline.py             # Orchestrates load → parse → split → embed → store
+│
+├── retrieval/
+│   ├── __init__.py
 │   ├── retriever.py
 │   └── hybrid_search.py
 │
-├── llm/                        # LLM integration
-│   ├── chat_model.py
-│   └── prompts.py
+├── llm/
+│   ├── __init__.py
+│   ├── chat_model.py           # HuggingFace LLM wrapper
+│   ├── prompts.py
+│   └── agents.py               # Q&A, Summarizer, Reasoning agents
+│
+├── utils/
+│   ├── __init__.py
+│   ├── logging.py
+│   ├── pdf_utils.py
+│   └── text_cleaning.py
 │
 ├── ui/
+│   ├── streamlit_app.py
 │   ├── gradio_app.py
-│   └── streamlit_app.py
+│   └── react_frontend/         # Optional full React UI
+│
+├── backend/
+│   ├── Dockerfile
+│   └── entrypoint.py
 │
 └── qdrant/
-    └── storage/                # Persistent DB storage
+    └── storage/                # Persistent DB storage for Qdrant
 ```
 
 ---
 
-⚙️ Setup Instructions
+## ⚙️ Setup Instructions
 
-1. Clone the repository
+1. Clone the Repository
 
 ```bash
 git clone https://github.com/yourusername/chat-with-pdfs.git
 cd chat-with-pdfs
 ```
 
-2. Start Qdrant (Vector DB)
-
-Run Qdrant container:
+2. Install Requirements (optional if using Docker)
 
 ```bash
-docker run -d -p 6333:6333 \
-  -v $(pwd)/qdrant/storage:/qdrant/storage \
-  qdrant/qdrant
+pip install -r requirements.txt
 ```
 
-Qdrant Dashboard → http://localhost:6333
+3. Install & Run Qdrant with Docker
 
-Data persists in qdrant/storage/
+- Install Docker
+  - Windows/Mac: Docker Desktop
+  - Linux:
+    ```bash
+    sudo apt update && sudo apt install docker.io -y
+    ```
 
-3. Build the backend image
+- Run Qdrant Container
+  ```bash
+  docker run -d -p 6333:6333 \
+    -v $(pwd)/qdrant/storage:/qdrant/storage \
+    qdrant/qdrant
+  ```
+  - Access Qdrant: http://localhost:6333
 
-```bash
-docker build -t chat-pdfs-backend -f backend/Dockerfile .
+4. Configure Project
+
+Edit .env or config.py:
+
+```python
+DB_TYPE = "qdrant"
+QDRANT_URL = "http://localhost:6333"
+EMBEDDING_DIM = 1536   # Matches embedding model
 ```
+
+5. Process PDFs or Fetch ArXiv Papers
+
+- For PDFs:
+  ```bash
+  python ingestion/pipeline.py --source pdf --file data/uploads/sample.pdf
+  ```
+- For ArXiv papers:
+  ```bash
+  python ingestion/pipeline.py --source arxiv --arxiv_id 2307.12345
+  ```
 
 This will:
 
-- Install dependencies from requirements.txt
-- Copy project code into /app inside the container
-- Set up Gradio server at port 7860
-
-4. Run the backend
-
-```bash
-docker run -p 7860:7860 chat-pdfs-backend
-```
-
-Now access the app at:
-👉 http://localhost:7860
-
----
-
-📚 Usage
-
-**Process PDFs**
-
-Place PDFs in `data/uploads/` then run:
-
-```bash
-python ingestion/pipeline.py
-```
-
-This will:
-
-- Extract text
+- Fetch LaTeX source (if ArXiv)
+- Parse to text, excluding equations
 - Split into chunks
 - Generate embeddings
-- Store them in Qdrant
+- Store in Qdrant
 
-**Query PDFs**
+6. Run the UI
 
-- Via Gradio UI → http://localhost:7860
-- Or via Streamlit (optional):
-
-```bash
-python ui/streamlit_app.py
-```
-
----
-
-🛑 Stopping
-
-**Stop backend:**
-
-```bash
-docker ps   # find container id
-docker stop <container_id>
-```
-
-**Stop Qdrant:**
-
-```bash
-docker stop $(docker ps -q --filter ancestor=qdrant/qdrant)
-```
-
-Closing Docker Desktop also stops all containers.
+- Gradio:
+  ```bash
+  python ui/gradio_app.py
+  ```
+  Access at http://localhost:7860
+- Streamlit:
+  ```bash
+  streamlit run ui/streamlit_app.py
+  ```
+  Access at http://localhost:8501
 
 ---
 
-🛠 Tech Stack
+##  Tech Stack
 
-- LLM: HuggingFace / local models
-- Vector DB: Qdrant (Dockerized)
-- Backend: FastAPI + Gradio
+- LLM: Local HuggingFace models (e.g., LLaMA, Falcon, Flan-T5)
+- Vector DB: Qdrant (semantic search & storage)
+- Frontend: Gradio / Streamlit
 - Embeddings: SentenceTransformers
-- UI: Gradio + Streamlit
+- PDF Parsing: PyMuPDF, pdfplumber
+- ArXiv Client: Fetch LaTeX source for embedding without downloading PDFs
+
+---
+
+##  Notes
+
+- Embeddings do not include equations.
+- LaTeX parsing removes section headers to focus on content.
+- Qdrant stores all vectors permanently, enabling semantic search across papers over time.
+- Modular design: add more sources like Springer, Google Scholar, etc. in the future.
