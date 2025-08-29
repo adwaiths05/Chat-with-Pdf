@@ -1,0 +1,11 @@
+{
+  "command": "node",
+  "args": ["build/index.js"],
+  "cwd": "/absolute/path/to/arxiv-mcp-server",
+  "enabled": true,
+  "alwaysAllow": [
+    "search_papers",
+    "get_paper",
+    "get_paper_content"
+  ]
+}
