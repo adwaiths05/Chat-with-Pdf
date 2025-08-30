@@ -34,5 +34,12 @@ requests>=2.32.0,<2.33.0
 numpy>=1.26.0,<1.27.0
 pandas>=2.2.0,<2.3.0
 
+# MCP / ArXiv
+arxiv>=1.4.0,<2.0.0
+pyyaml>=6.0,<7.0
+
+# Testing
+pytest>=7.4.0,<8.0.0
+
 # Optional for hybrid search
 scikit-learn>=1.3.3
