@@ -3,7 +3,6 @@ from qdrant_client.models import PointStruct
 import uuid
 from database.schema import DBSchema
 
-
 class DBManager:
     def __init__(self, collection_name=DBSchema.COLLECTION_NAME, host="localhost", port=6333):
         self.client = QdrantClient(host=host, port=port)
@@ -24,6 +23,7 @@ class DBManager:
             payload={
                 "text": text,
                 "pdf_name": metadata.get("pdf_name", "unknown"),
+                "paper_id": metadata.get("paper_id", None),
                 "page": metadata.get("page", -1),
             },
         )
@@ -39,3 +39,27 @@ class DBManager:
             {**hit.payload, "score": hit.score}
             for hit in hits
         ]
+
+    # ------------------------
+    # New: filter points by metadata
+    # ------------------------
+    def filter(self, metadata_dict):
+        """
+        Returns points where all key-values in metadata_dict match the payload.
+        """
+        # Construct Qdrant filter
+        from qdrant_client.http.models import Filter, FieldCondition, MatchValue
+
+        conditions = [
+            FieldCondition(key=k, match=MatchValue(value=v))
+            for k, v in metadata_dict.items()
+        ]
+        q_filter = Filter(must=conditions)
+
+        result = self.client.scroll(
+            collection_name=self.collection_name,
+            filter=q_filter,
+            with_payload=True,
+            with_vectors=False
+        )
+        return result.points

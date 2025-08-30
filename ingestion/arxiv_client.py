@@ -22,3 +22,18 @@ class ArxivMCP:
         #  Convert to plain text
         clean_text = latex_to_text(latex_content)
         return paper_id, clean_text
+from ingestion.mcp.client import MCPClient
+
+class ArxivClient:
+    def __init__(self):
+        self.client = MCPClient()
+
+    def fetch(self, arxiv_id: str) -> str:
+        """Fetch LaTeX source for a paper via MCP server."""
+        response = self.client.call("fetch_arxiv", {"id": arxiv_id})
+        if "error" in response:
+            raise RuntimeError(response["error"])
+        return response["result"]
+
+    def close(self):
+        self.client.close()

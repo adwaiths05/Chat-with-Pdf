@@ -2,30 +2,21 @@ import subprocess
 import json
 
 class MCPClient:
-    def __init__(self, config_path: str):
-        with open(config_path) as f:
-            self.config = json.load(f)
-
-        self.proc = subprocess.Popen(
-            [self.config["command"], *self.config["args"]],
-            cwd=self.config.get("cwd"),
+    def __init__(self, server_cmd=["python", "ingestion/mcp/arxiv_server.py"]):
+        self.process = subprocess.Popen(
+            server_cmd,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             text=True
         )
 
-    def call(self, method: str, params: dict):
-        """Send JSON-RPC request to MCP server and return response"""
-        request = {
-            "jsonrpc": "2.0",
-            "method": method,
-            "params": params,
-            "id": 1
-        }
-        self.proc.stdin.write(json.dumps(request) + "\n")
-        self.proc.stdin.flush()
-        response_line = self.proc.stdout.readline()
-        try:
-            return json.loads(response_line)
-        except json.JSONDecodeError:
-            raise RuntimeError(f"Invalid MCP response: {response_line}")
+    def call(self, method: str, params: dict) -> dict:
+        """Send a request and wait for response."""
+        request = {"method": method, "params": params}
+        self.process.stdin.write(json.dumps(request) + "\n")
+        self.process.stdin.flush()
+        response = self.process.stdout.readline()
+        return json.loads(response)
+
+    def close(self):
+        self.process.terminate()
