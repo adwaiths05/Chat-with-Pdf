@@ -24,20 +24,21 @@ def ingest_pdf(file_path, pdf_name=None):
     process_pdf(file_path, pdf_name)
 
 # ----- New ArXiv ingestion -----
-def ingest_arxiv_paper(title: str):
+def ingest_arxiv_paper(arxiv_id: str):
     arxiv = ArxivMCP()
     embedder = EmbeddingsGenerator()
     splitter = TextSplitter()
     db = DBManager()
 
-    paper_id, text = arxiv.fetch_paper(title)
+    paper_id, text = arxiv.fetch_paper(arxiv_id)
     chunks = splitter.split(text)
     embeddings = embedder.embed_batch(chunks)
 
     for i, (chunk, emb) in enumerate(zip(chunks, embeddings)):
         db.add_chunk(chunk, emb, {"paper_id": paper_id, "page": i})
 
-    print(f"✅ Stored {len(chunks)} chunks from '{title}' into DB")
+    print(f"✅ Stored {len(chunks)} chunks from '{paper_id}' into DB")
+
 
 # ----- Optional: unified interface -----
 def ingest(file_path_or_title: str, source_type="pdf"):

@@ -1,13 +1,15 @@
 {
   "name": "arxiv_mcp_server",
-  "description": "Fetches ArXiv LaTeX sources",
+  "description": "Fetches ArXiv LaTeX and searches titles",
+  "command": ["python", "ingestion/mcp/arxiv_server.py"],
   "tools": {
-    "fetch_arxiv": {
-      "description": "Fetch LaTeX source from ArXiv by ID",
-      "params": {
-        "id": "ArXiv paper identifier (e.g., 2301.12345)"
-      }
+    "search_papers": {
+      "description": "Search arXiv by title/keywords",
+      "params": { "query": "string", "max_results": "int (default 5)" }
+    },
+    "get_latex": {
+      "description": "Get concatenated LaTeX for an arXiv id",
+      "params": { "id": "string (e.g., 2301.12345)" }
     }
-  },
-  "command": ["python", "ingestion/mcp/arxiv_server.py"]
+  }
 }

@@ -1,39 +1,44 @@
+import re
 from ingestion.mcp.client import MCPClient
 from ingestion.latex_parser import latex_to_text
 
+
+_ARXIV_ID_RE = re.compile(r"^\d{4}\.\d{4,5}(v\d+)?$")  # simple new-style id check
+
+
 class ArxivMCP:
-    def __init__(self):
-        self.client = MCPClient(config_path="ingestion/mcp/arxiv_server.json")
+    """
+    High-level wrapper:
+    - accepts title OR arXiv id
+    - if title, searches and picks the top hit
+    - fetches LaTeX from server
+    - converts to plain text via latex_to_text()
+    """
 
-    def fetch_paper(self, paper_title: str):
-        #  Search for the paper
-        search_result = self.client.call("search_papers", {"title": paper_title})
-        if not search_result.get("result") or not search_result["result"].get("papers"):
-            raise ValueError(f"No papers found for '{paper_title}'")
-        paper = search_result["result"]["papers"][0]
-        paper_id = paper["id"]
+    def __init__(self, server_cmd=None, cwd=None):
+        self.client = MCPClient(server_cmd=server_cmd, cwd=cwd)
 
-        #  Fetch LaTeX content
-        latex_content_resp = self.client.call("get_paper_content", {"id": paper_id})
-        if "result" not in latex_content_resp or "content" not in latex_content_resp["result"]:
-            raise RuntimeError(f"Failed to get content for paper {paper_id}")
-        latex_content = latex_content_resp["result"]["content"]
+    def _resolve_id(self, title_or_id: str) -> str:
+        if _ARXIV_ID_RE.match(title_or_id.strip()):
+            return title_or_id.strip()
 
-        #  Convert to plain text
-        clean_text = latex_to_text(latex_content)
-        return paper_id, clean_text
-from ingestion.mcp.client import MCPClient
+        # Otherwise treat as a query string; pick best match
+        resp = self.client.call("search_papers", {"query": title_or_id, "max_results": 1})
+        if "error" in resp:
+            raise RuntimeError(resp["error"]["message"])
+        papers = resp["result"].get("papers", [])
+        if not papers:
+            raise ValueError(f"No arXiv paper found for query: {title_or_id}")
+        return papers[0]["id"]
 
-class ArxivClient:
-    def __init__(self):
-        self.client = MCPClient()
-
-    def fetch(self, arxiv_id: str) -> str:
-        """Fetch LaTeX source for a paper via MCP server."""
-        response = self.client.call("fetch_arxiv", {"id": arxiv_id})
-        if "error" in response:
-            raise RuntimeError(response["error"])
-        return response["result"]
+    def fetch_paper(self, title_or_id: str):
+        arxiv_id = self._resolve_id(title_or_id)
+        resp = self.client.call("get_latex", {"id": arxiv_id})
+        if "error" in resp:
+            raise RuntimeError(resp["error"]["message"])
+        latex = resp["result"]["latex"]
+        plain = latex_to_text(latex)
+        return arxiv_id, plain
 
     def close(self):
         self.client.close()
