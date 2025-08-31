@@ -3,9 +3,11 @@ import torch
 
 
 class HuggingFaceModel:
-    def __init__(self, model_name: str, device: str = "cuda", quantize: bool = False):
+    def __init__(self, model_name: str, device: str = None, quantize: bool = False):
         self.model_name = model_name
         self.tokenizer = AutoTokenizer.from_pretrained(model_name)
+        if device is None:
+            device = "cuda" if torch.cuda.is_available() else "cpu"
 
         # Decide quantization
         if quantize:
