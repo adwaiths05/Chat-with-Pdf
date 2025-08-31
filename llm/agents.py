@@ -7,7 +7,7 @@ from retrieval.retriever import Retriever  # assuming this queries Qdrant
 class QAAgent:
     def __init__(self):
         self.model = HuggingFaceModel(
-            "meta-llama/Meta-Llama-3-8B-Instruct",
+            "meta-llama/Llama-2-7b-chat-hf",
             quantize=True
         )
         self.retriever = Retriever()
