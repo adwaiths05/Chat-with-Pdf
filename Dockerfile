@@ -1,5 +1,5 @@
 # Base image
-FROM python:3.11-slim
+FROM genai-base:latest
 
 # Set working directory
 WORKDIR /app
