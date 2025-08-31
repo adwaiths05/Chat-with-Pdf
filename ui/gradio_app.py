@@ -1,27 +1,29 @@
 import gradio as gr
-from llms.agents import QAAgent, SummarizationAgent, ReasoningAgent
-from ingestion.retriever import Retriever
+from llm.agents import QAAgent, SummarizationAgent, ReasoningAgent
+from retrieval.retriever import Retriever
 
 # Initialize agents
 qa_agent = QAAgent()
 summ_agent = SummarizationAgent()
 reason_agent = ReasoningAgent()
-retriever = Retriever()  # For fetching context from Qdrant
-
+retriever = Retriever()  # Fetch context from Qdrant
 
 # Handlers
 def handle_qa(question):
+    if not question.strip():
+        return "❌ Please enter a question."
     context, results = retriever.retrieve(question, top_k=5)
     return qa_agent.answer(context=context, question=question)
 
-
 def handle_summarization(text):
+    if not text.strip():
+        return "❌ Please paste some text to summarize."
     return summ_agent.summarize(text=text)
 
-
 def handle_reasoning(question):
+    if not question.strip():
+        return "❌ Please enter a question."
     return reason_agent.reason(question=question)
-
 
 # Gradio UI
 with gr.Blocks() as demo:
@@ -36,10 +38,11 @@ with gr.Blocks() as demo:
                 placeholder="Ask something from your PDFs"
             )
             qa_output = gr.Textbox(label="Answer", lines=8)
-            gr.Button("Get Answer").click(
+            gr.Button("Get Answer", variant="primary").click(
                 fn=handle_qa,
                 inputs=[question_input],
-                outputs=[qa_output]
+                outputs=[qa_output],
+                show_progress=True
             )
 
         # Summarization tab
@@ -51,10 +54,11 @@ with gr.Blocks() as demo:
                 placeholder="Paste the text to summarize"
             )
             summary_output = gr.Textbox(label="Summary", lines=10)
-            gr.Button("Summarize").click(
+            gr.Button("Summarize", variant="primary").click(
                 fn=handle_summarization,
                 inputs=[text_input],
-                outputs=[summary_output]
+                outputs=[summary_output],
+                show_progress=True
             )
 
         # Reasoning tab
@@ -65,11 +69,16 @@ with gr.Blocks() as demo:
                 placeholder="Enter a complex question"
             )
             reasoning_output = gr.Textbox(label="Stepwise Answer", lines=12)
-            gr.Button("Reason").click(
+            gr.Button("Reason", variant="primary").click(
                 fn=handle_reasoning,
                 inputs=[reasoning_input],
-                outputs=[reasoning_output]
+                outputs=[reasoning_output],
+                show_progress=True
             )
 
 if __name__ == "__main__":
-    demo.launch()
+    demo.launch(
+        server_name="0.0.0.0",
+        server_port=7860,
+        show_error=True
+    )
