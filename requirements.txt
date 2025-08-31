@@ -9,17 +9,20 @@ typing-extensions==4.9.0
 PyMuPDF>=1.26.3,<1.27
 pdfplumber==0.9.0
 python-docx>=1.0.0,<1.3
+pypdf>=3.17.0,<4.0.0
 
 # Text processing
 regex==2023.10.3
 tqdm==4.66.1
+langchain_text_splitters>=0.2.0
 
 # Embeddings / LLMs
-torch>=2.3.1,<2.4.0                 # Compatible with RTX 4060
-transformers>=4.35.0,<4.45.0       # Modern Hugging Face models
-sentence-transformers>=2.2.2,<2.8.0
-accelerate>=0.23.0,<0.24.0
+#torch>=2.3.1,<2.4.0                 # Compatible with RTX 4060
+#transformers>=4.35.0,<4.45.0       # Modern Hugging Face models
+#sentence-transformers>=2.2.2,<2.8.0
+#accelerate>=0.23.0,<0.24.0
 bitsandbytes>=0.41.1,<0.42.0      # For quantization support
+
 
 # Vector DB
 qdrant-client>=1.13.0,<1.14.0
