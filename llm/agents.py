@@ -6,14 +6,14 @@ from retrieval.retriever import Retriever  # assuming this queries Qdrant
 
 class QAAgent:
     def __init__(self):
+        # Use a lightweight model (T5 works well on CPU)
         self.model = HuggingFaceModel(
-            "meta-llama/Llama-2-7b-chat-hf",
-            quantize=True
+            "google/flan-t5-base",
+            quantize=False   # force off for CPU safety
         )
         self.retriever = Retriever()
 
     def answer(self, context: str, question: str, arxiv_title: str = None) -> str:
-        # 1️⃣ If an ArXiv paper is mentioned and not in DB, ingest it
         if arxiv_title:
             if not self.retriever.has_paper(arxiv_title):
                 ingest_arxiv_paper(arxiv_title)
@@ -25,11 +25,14 @@ class QAAgent:
 
 class SummarizationAgent:
     def __init__(self):
-        self.model = HuggingFaceModel("google/flan-t5-large")
+        # T5-large can still run on CPU, slower though
+        self.model = HuggingFaceModel(
+            "google/flan-t5-base",
+            quantize=False
+        )
         self.retriever = Retriever()
 
     def summarize(self, text: str = None, arxiv_title: str = None) -> str:
-        # Dynamically fetch content if ArXiv title provided
         if arxiv_title:
             if not self.retriever.has_paper(arxiv_title):
                 ingest_arxiv_paper(arxiv_title)
@@ -41,16 +44,19 @@ class SummarizationAgent:
 
 class ReasoningAgent:
     def __init__(self):
+        # Falcon is heavy, only use quantize if GPU is available
         self.model = HuggingFaceModel(
-            "tiiuae/falcon-7b-instruct",
+            "tiiuae/falcon-rw-1b",
             quantize=True
         )
         self.retriever = Retriever()
 
     def reason(self, question: str, arxiv_title: str = None) -> str:
-        # Optionally fetch new ArXiv content for reasoning
         context = ""
         if arxiv_title:
             if not self.retriever.has_paper(arxiv_title):
                 ingest_arxiv_paper(arxiv_title)
             context = self.retriever.get_context_for_paper(arxiv_title)
+
+        prompt = REASONING_PROMPT.format(context=context, question=question)
+        return self.model.generate(prompt)
